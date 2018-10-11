@@ -12,8 +12,10 @@
 #include <string>
 #include <type_traits>
 #include <vector>
+#include <map>
 
 struct AbsolutePath;
+struct Project;
 
 enum class SerializeFormat { Json, MessagePack };
 
@@ -316,3 +318,4 @@ std::unique_ptr<IndexFile> Deserialize(
     optional<int> expected_version);
 
 void SetTestOutputMode();
+void SetProject(Project *p);

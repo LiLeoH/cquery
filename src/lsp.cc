@@ -9,6 +9,7 @@
 #include <rapidjson/writer.h>
 #include <loguru.hpp>
 
+#include <sys/socket.h>
 #include <stdio.h>
 #include <iostream>
 
@@ -180,10 +181,33 @@ optional<char> ReadCharFromStdinBlocking() {
   return nullopt;
 }
 
+optional<char> ReadCharFromSocketBlocking(int connfd) {
+  static char buf[1024];
+  static int pos = 0;
+  static int max = 0;
+
+  if (pos < max) {
+    return buf[pos++];
+  }
+
+  max = recv(connfd, buf, sizeof(buf), 0);
+  if (max > 0) {
+    pos = 1;
+    return buf[0];
+  }
+
+  return nullopt;
+}
+
 optional<std::string> MessageRegistry::ReadMessageFromStdin(
-    std::unique_ptr<InMessage>* message) {
-  optional<std::string> content =
-      ReadJsonRpcContentFrom(&ReadCharFromStdinBlocking);
+    std::unique_ptr<InMessage>* message, int connfd) {
+  optional<std::string> content;
+  if (connfd > 0) {
+    content = ReadJsonRpcContentFrom(std::bind(&ReadCharFromSocketBlocking, connfd));
+  }
+  else {
+    content = ReadJsonRpcContentFrom(&ReadCharFromStdinBlocking);
+  }
   if (!content) {
     LOG_S(ERROR) << "Failed to read JsonRpc input; exiting";
     exit(1);

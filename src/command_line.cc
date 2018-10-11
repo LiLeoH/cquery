@@ -33,6 +33,11 @@
 #include <rapidjson/error/en.h>
 #include <loguru.hpp>
 
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <functional>
@@ -203,8 +208,7 @@ bool QueryDbMainLoop(QueryDatabase* db,
   return did_work;
 }
 
-void RunQueryDbThread(const std::string& bin_name) {
-  Project project;
+void RunQueryDbThread(const std::string& bin_name, Project &project) {
   SemanticHighlightSymbolCache semantic_cache;
   WorkingFiles working_files;
   FileConsumerSharedState file_consumer_shared;
@@ -302,17 +306,17 @@ void RunQueryDbThread(const std::string& bin_name) {
 // blocks.
 //
 // |ipc| is connected to a server.
-void LaunchStdinLoop(std::unordered_map<MethodType, Timer>* request_times) {
+void LaunchStdinLoop(std::unordered_map<MethodType, Timer>* request_times, int connfd) {
   // If flushing cin requires flushing cout there could be deadlocks in some
   // clients.
   std::cin.tie(nullptr);
 
-  WorkThread::StartThread("stdin", [request_times]() {
+  WorkThread::StartThread("stdin", [request_times, connfd]() {
     auto* queue = QueueManager::instance();
     while (true) {
       std::unique_ptr<InMessage> message;
       optional<std::string> err =
-          MessageRegistry::instance()->ReadMessageFromStdin(&message);
+          MessageRegistry::instance()->ReadMessageFromStdin(&message, connfd);
 
       // Message parsing can fail if we don't recognize the method.
       if (err) {
@@ -345,7 +349,7 @@ void LaunchStdinLoop(std::unordered_map<MethodType, Timer>* request_times) {
   });
 }
 
-void LaunchStdoutThread(std::unordered_map<MethodType, Timer>* request_times) {
+void LaunchStdoutThread(std::unordered_map<MethodType, Timer>* request_times, int connfd) {
   WorkThread::StartThread("stdout", [=]() {
     auto* queue = QueueManager::instance();
 
@@ -359,24 +363,31 @@ void LaunchStdoutThread(std::unordered_map<MethodType, Timer>* request_times) {
 
       RecordOutput(message.content);
 
-      fwrite(message.content.c_str(), message.content.size(), 1, stdout);
-      fflush(stdout);
+      if (connfd < 0) {
+        fwrite(message.content.c_str(), message.content.size(), 1, stdout);
+        fflush(stdout);
+      }
+      else {
+        write(connfd, message.content.c_str(), message.content.size());
+      }
     }
   });
 }
 
-void LanguageServerMain(const std::string& bin_name) {
+void LanguageServerMain(const std::string& bin_name, int connfd) {
+  Project project;
+  SetProject(&project);
+
   std::unordered_map<MethodType, Timer> request_times;
 
-  LaunchStdinLoop(&request_times);
+  LaunchStdinLoop(&request_times, connfd);
 
   // We run a dedicated thread for writing to stdout because there can be an
   // unknown number of delays when output information.
-  LaunchStdoutThread(&request_times);
-
+  LaunchStdoutThread(&request_times, connfd);
   // Start querydb which takes over this thread. The querydb will launch
   // indexer threads as needed.
-  RunQueryDbThread(bin_name);
+  RunQueryDbThread(bin_name, project);
 }
 
 int main(int argc, char** argv, const char** env) {
@@ -503,7 +514,45 @@ int main(int argc, char** argv, const char** env) {
       }
     }
 
-    LanguageServerMain(argv[0]);
+    bool use_ipc = HasOption(options, "--ipc");
+    signal(SIGCHLD, SIG_IGN);
+
+    int connfd = -1;
+    if (!use_ipc) {
+      int sockfd;
+      sockfd = socket(AF_INET, SOCK_STREAM, 0);
+
+      int on = 1;
+      setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+
+      struct sockaddr_in servaddr;
+      memset(&servaddr, 0, sizeof(servaddr));  
+      servaddr.sin_family = AF_INET;  
+      servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+      servaddr.sin_port = htons(9876);
+
+      bind(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
+      listen(sockfd, 10);
+
+      while (1) {
+        connfd = accept(sockfd, (struct sockaddr*)NULL, NULL);
+        if (connfd == -1) {
+          LOG_S(ERROR) << "socket accept err";
+          break;
+        }
+
+        pid_t pid = fork();
+        if (pid != 0) {
+          close(connfd);
+        }
+        else {
+          close(sockfd);
+          break;
+        }
+      }
+    }
+    
+    LanguageServerMain(argv[0], connfd);
   }
 
   if (HasOption(options, "--wait-for-input")) {

@@ -3,7 +3,9 @@
 #include "serializers/json.h"
 #include "serializers/msgpack.h"
 
+#include "project.h"
 #include "indexer.h"
+#include "platform.h"
 
 #include <doctest/doctest.h>
 #include <loguru.hpp>
@@ -11,6 +13,8 @@
 #include <stdexcept>
 
 bool gTestOutputMode = false;
+
+Project *project = nullptr;
 
 //// Elementary types
 
@@ -117,9 +121,19 @@ void Reflect(Reader& visitor, std::string& value) {
   if (!visitor.IsString())
     throw std::invalid_argument("std::string");
   value = visitor.GetString();
+
+  if (value.size() < PATH_MAX)
+    project->RemapPath(value, Project::PathType::INPUT);
 }
 void Reflect(Writer& visitor, std::string& value) {
-  visitor.String(value.c_str(), (rapidjson::SizeType)value.size());
+  if (value.size() < PATH_MAX) {
+    std::string tmp = value;
+    project->RemapPath(tmp, Project::PathType::OUTPUT);
+    visitor.String(tmp.c_str(), (rapidjson::SizeType)tmp.size());
+  } 
+  else {
+    visitor.String(value.c_str(), (rapidjson::SizeType)value.size());
+  }
 }
 
 void Reflect(Reader&, std::string_view&) {
@@ -433,6 +447,51 @@ std::unique_ptr<IndexFile> Deserialize(
 
 void SetTestOutputMode() {
   gTestOutputMode = true;
+}
+
+void FillPathMap(rapidjson::Value &json_val, Project::PathType pt)
+{
+  if (json_val.IsArray()) {
+    for (int i = 0; i < json_val.Size(); ++i) {
+      if (json_val[i].IsArray() && json_val[i].Size() >= 2) {
+        std::string s1 = json_val[i][0].GetString();
+        std::string s2 = json_val[i][1].GetString();
+
+        if (pt == Project::PathType::INPUT ||
+            pt == Project::PathType::BOTH)
+          project->in_path_map[s1] = s2;
+        else if (pt == Project::PathType::OUTPUT)
+          project->out_path_map[s1] = s2;
+        if (pt == Project::PathType::BOTH)
+          project->out_path_map[s2] = s1;
+
+        LOG_S(INFO) << "add path map info(" << pt << "):" 
+            << s1 << " <> " << s2;
+      }
+    }
+  }
+}
+
+void SetProject(Project *p) {
+  project = p;
+
+  optional<AbsolutePath> cfg_path = NormalizePath("config.json");
+  optional<std::string> content = ReadContent(*cfg_path);
+  if (content) {
+    rapidjson::Document reader;
+    rapidjson::ParseResult ok = reader.Parse(content.value().c_str());
+    if (!ok) {
+      LOG_S(ERROR) << "Failed to parse config";
+      return;
+    }
+
+    rapidjson::Value &val = reader["inPathMap"];
+    FillPathMap(val, Project::PathType::INPUT);
+    val = reader["outPathMap"];
+    FillPathMap(val, Project::PathType::OUTPUT);
+    val = reader["inOutPathMap"];
+    FillPathMap(val, Project::PathType::BOTH);
+  }
 }
 
 TEST_SUITE("Serializer utils") {

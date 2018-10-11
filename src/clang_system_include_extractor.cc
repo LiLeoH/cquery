@@ -40,10 +40,11 @@ std::vector<std::string> ExtractSystemIncludePaths(
     TrimInPlace(line);
     if (!in_system_include_search_section) {
       in_system_include_search_section =
-          line == "#include <...> search starts here:";
+          (line == "#include <...> search starts here:") ||
+          (line == "#include <...> 搜索从这里开始：");
       continue;
     }
-    if (line == "End of search list.") {
+    if (line == "End of search list." || line == "搜索列表结束。") {
       in_system_include_search_section = false;
       break;
     }

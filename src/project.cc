@@ -847,6 +847,32 @@ void Project::Index(QueueManager* queue,
   });
 }
 
+void Project::RemapPath(std::string &value, PathType pt)
+{
+  std::map<std::string, std::string> *pm;
+  switch (pt) {
+    case PathType::INPUT:
+      pm = &in_path_map;
+      break;
+    case PathType::OUTPUT:
+      pm = &out_path_map;
+      break;
+    default:
+      return;
+  }
+
+  for (const auto &kv : *pm) {
+    if (StartsWith(value, kv.first)) {
+      value.replace(0, kv.first.size(), kv.second);
+      std::string::size_type pos = value.find_first_of('\\', kv.first.size());
+      while (pos != value.npos) {
+        value.replace(pos, 1, 1, '/');
+        pos = value.find_first_of('\\', pos + 1);
+      }
+    }
+  }
+}
+
 TEST_SUITE("Project") {
   void CheckFlags(const std::string& directory, const std::string& file,
                   std::vector<std::string> raw,

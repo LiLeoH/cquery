@@ -36,7 +36,7 @@ struct MessageRegistry {
   std::unordered_map<std::string, Allocator> allocators;
 
   optional<std::string> ReadMessageFromStdin(
-      std::unique_ptr<InMessage>* message);
+      std::unique_ptr<InMessage>* message, int connfd);
   optional<std::string> Parse(Reader& visitor,
                               std::unique_ptr<InMessage>* message);
 };

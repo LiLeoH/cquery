@@ -10,6 +10,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <map>
 
 class QueueManager;
 struct WorkingFiles;
@@ -22,10 +23,18 @@ struct Project {
     bool is_inferred = false;
   };
 
+  enum PathType {
+    INPUT,
+    OUTPUT,
+    BOTH,
+  };
+
   // Include directories for "" headers
   std::vector<Directory> quote_include_directories;
   // Include directories for <> headers
   std::vector<Directory> angle_include_directories;
+  std::map<std::string, std::string> in_path_map;
+  std::map<std::string, std::string> out_path_map;
 
   std::vector<Entry> entries;
   spp::sparse_hash_map<AbsolutePath, int> absolute_path_to_entry_index_;
@@ -58,4 +67,6 @@ struct Project {
       std::function<void(int i, const Entry& entry)> action);
 
   void Index(QueueManager* queue, WorkingFiles* working_files, lsRequestId id);
+
+  void RemapPath(std::string &value, PathType pt);
 };
