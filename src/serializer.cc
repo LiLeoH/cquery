@@ -117,7 +117,7 @@ void Reflect(Writer& visitor, bool& value) {
   visitor.Bool(value);
 }
 
-void Reflect(Reader& visitor, std::string& value) {
+void ReflectUseRemap(Reader& visitor, std::string& value) {
   if (!visitor.IsString())
     throw std::invalid_argument("std::string");
   value = visitor.GetString();
@@ -125,7 +125,7 @@ void Reflect(Reader& visitor, std::string& value) {
   if (value.size() < PATH_MAX)
     project->RemapPath(value, Project::PathType::INPUT);
 }
-void Reflect(Writer& visitor, std::string& value) {
+void ReflectUseRemap(Writer& visitor, std::string& value) {
   if (value.size() < PATH_MAX) {
     std::string tmp = value;
     project->RemapPath(tmp, Project::PathType::OUTPUT);
@@ -134,6 +134,15 @@ void Reflect(Writer& visitor, std::string& value) {
   else {
     visitor.String(value.c_str(), (rapidjson::SizeType)value.size());
   }
+}
+
+void Reflect(Reader& visitor, std::string& value) {
+  if (!visitor.IsString())
+    throw std::invalid_argument("std::string");
+  value = visitor.GetString();
+}
+void Reflect(Writer& visitor, std::string& value) {
+    visitor.String(value.c_str(), (rapidjson::SizeType)value.size());
 }
 
 void Reflect(Reader&, std::string_view&) {

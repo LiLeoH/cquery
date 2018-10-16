@@ -179,6 +179,9 @@ void Reflect(Writer& visitor, bool& value);
 void Reflect(Reader& visitor, std::string& value);
 void Reflect(Writer& visitor, std::string& value);
 
+void ReflectUseRemap(Reader& visitor, std::string& value);
+void ReflectUseRemap(Writer& visitor, std::string& value);
+
 void Reflect(Reader& visitor, std::string_view& view);
 void Reflect(Writer& visitor, std::string_view& view);
 

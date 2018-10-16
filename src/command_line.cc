@@ -525,11 +525,16 @@ int main(int argc, char** argv, const char** env) {
       int on = 1;
       setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
+      int port = 9876;
+      if (HasOption(options, "--port")) {
+        port = stol(options["--port"]);
+      }
+
       struct sockaddr_in servaddr;
       memset(&servaddr, 0, sizeof(servaddr));  
       servaddr.sin_family = AF_INET;  
       servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-      servaddr.sin_port = htons(9876);
+      servaddr.sin_port = htons(port);
 
       bind(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
       listen(sockfd, 10);

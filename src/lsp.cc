@@ -360,10 +360,12 @@ AbsolutePath lsDocumentUri::GetAbsolutePath() const {
 }
 
 void Reflect(Writer& visitor, lsDocumentUri& value) {
-  Reflect(visitor, value.raw_uri_);
+  // Reflect(visitor, value.raw_uri_);
+  ReflectUseRemap(visitor, value.raw_uri_);
 }
 void Reflect(Reader& visitor, lsDocumentUri& value) {
-  Reflect(visitor, value.raw_uri_);
+  // Reflect(visitor, value.raw_uri_);
+  ReflectUseRemap(visitor, value.raw_uri_);
   // Only record the path when we deserialize a URI, since it most likely came
   // from the client.
   UriCache::instance()->RecordPath(value.GetRawPath());
