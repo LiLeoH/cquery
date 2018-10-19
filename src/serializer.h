@@ -321,4 +321,4 @@ std::unique_ptr<IndexFile> Deserialize(
     optional<int> expected_version);
 
 void SetTestOutputMode();
-void SetProject(Project *p);
+void SetProject(Project *p, const std::string &cfg_path);

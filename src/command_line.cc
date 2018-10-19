@@ -374,9 +374,11 @@ void LaunchStdoutThread(std::unordered_map<MethodType, Timer>* request_times, in
   });
 }
 
-void LanguageServerMain(const std::string& bin_name, int connfd) {
+void LanguageServerMain(const std::string& bin_name, 
+    const std::string &cfg_path, 
+    int connfd) {
   Project project;
-  SetProject(&project);
+  SetProject(&project, cfg_path);
 
   std::unordered_map<MethodType, Timer> request_times;
 
@@ -556,8 +558,12 @@ int main(int argc, char** argv, const char** env) {
         }
       }
     }
-    
-    LanguageServerMain(argv[0], connfd);
+
+    std::string cfg_path = "config.json";
+    if (HasOption(options, "--cfg")) {
+      cfg_path = options["--cfg"];
+    }
+    LanguageServerMain(argv[0], cfg_path, connfd);
   }
 
   if (HasOption(options, "--wait-for-input")) {

@@ -13,8 +13,7 @@
 #include <stdexcept>
 
 bool gTestOutputMode = false;
-
-Project *project = nullptr;
+Project *project;
 
 //// Elementary types
 
@@ -481,11 +480,11 @@ void FillPathMap(rapidjson::Value &json_val, Project::PathType pt)
   }
 }
 
-void SetProject(Project *p) {
+void SetProject(Project *p, const std::string &cfg_path) {
   project = p;
 
-  optional<AbsolutePath> cfg_path = NormalizePath("config.json");
-  optional<std::string> content = ReadContent(*cfg_path);
+  optional<AbsolutePath> abs_cfg_path = NormalizePath(cfg_path);
+  optional<std::string> content = ReadContent(*abs_cfg_path);
   if (content) {
     rapidjson::Document reader;
     rapidjson::ParseResult ok = reader.Parse(content.value().c_str());
