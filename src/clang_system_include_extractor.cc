@@ -158,8 +158,8 @@ std::vector<std::string> FindSystemDefines(
     for (auto &def : defines) {
       LOG_S(INFO) << "find defines: " << def;
     }
-    // if (!defines.empty())
-    //   return defines;
+    if (!defines.empty())
+      return defines;
   }
   return {};
 }

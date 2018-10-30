@@ -1,0 +1,7 @@
+{"inPathMap":[],
+"outPathMap":[],
+"inOutPathMap":[["file:///e%3A/code/","file:///mnt/hgfs/code/"],
+                ["e:\\code\\", "/mnt/hgfs/code/"],
+                ["file:///f%3A/mingw64/include/c%2B%2B/","file:///usr/local/gcc-4.6.3/include/c%2B%2B/"],
+                ["f:\\mingw64\\include\\c++\\","/usr/local/gcc-4.6.3/include/c++/"]]
+}
