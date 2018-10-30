@@ -148,8 +148,11 @@ std::vector<std::string> FindSystemDefines(
 
     LOG_S(INFO) << "Output:\n" << Trim(*preprocessor_output);
     std::vector<std::string> defines = ExtractSystemDefines(*preprocessor_output);
-    if (!defines.empty())
-      return defines;
+    for (auto &def : defines) {
+      LOG_S(INFO) << "find defines: " << def;
+    }
+    // if (!defines.empty())
+    //   return defines;
   }
   return {};
 }
