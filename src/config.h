@@ -46,7 +46,7 @@ struct Config {
   // takes only 60% of the corresponding JSON size, but is difficult to inspect.
   // msgpack does not store map keys and you need to re-index whenever a struct
   // member has changed.
-  SerializeFormat cacheFormat = SerializeFormat::Json;
+  SerializeFormat cacheFormat = SerializeFormat::MessagePack;
 
   // Value to use for clang -resource-dir if not present in
   // compile_commands.json.
