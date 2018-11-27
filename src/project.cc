@@ -155,13 +155,26 @@ const std::vector<std::string>& GetSystemIncludes(
     }
   }
 
+  static const std::vector<std::string> known_compiler = {
+    "g++", "gcc", "clang", "clang++"
+  };
+
   std::vector<std::string> compiler_drivers;
   if (IsAbsolutePath(compiler_driver)) {
     compiler_drivers.emplace_back(compiler_driver);
   } else {
-    compiler_drivers.emplace_back(GetExecutablePathNextToCqueryBinary("cquery-clang").path);
-    compiler_drivers.emplace_back("clang++");
-    compiler_drivers.emplace_back("g++");
+    for (auto &compiler : known_compiler) {
+      if (compiler_driver.find(compiler) != compiler_driver.npos) {
+        compiler_drivers.emplace_back(compiler);
+        break;
+      }
+    }
+
+    if (compiler_drivers.empty()) {
+      compiler_drivers.emplace_back(GetExecutablePathNextToCqueryBinary("cquery-clang").path);
+      compiler_drivers.emplace_back("clang++");
+      compiler_drivers.emplace_back("g++");
+    }
   }
 
   project_config->discovered_system_includes[language] =

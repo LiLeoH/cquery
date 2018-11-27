@@ -151,7 +151,7 @@ optional<std::string> RunExecutable(const std::vector<std::string>& command,
   unsigned int exit_status = 0;
   ec = process.stop(reproc::cleanup::wait, reproc::infinite, &exit_status);
   if (ec) {
-    LOG_S(ERROR) << "Error waiting for exit of " << command_with_error(ec);
+    LOG_S(WARNING) << "Error waiting for exit of " << command_with_error(ec);
     // return nullopt;
   }
 
