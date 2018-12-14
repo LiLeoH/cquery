@@ -357,8 +357,10 @@ void LaunchStdoutThread(std::unordered_map<MethodType, Timer>* request_times, in
       Stdout_Request message = queue->for_stdout.Dequeue();
 
       if (ShouldDisplayMethodTiming(message.method)) {
-        Timer time = (*request_times)[message.method];
-        time.ResetAndPrint("[e2e] Running " + std::string(message.method));
+        auto timer_it = request_times->find(message.method);
+        if (timer_it != request_times->end()) {
+          timer_it->second.ResetAndPrint("[e2e] Running " + std::string(message.method));
+        }
       }
 
       RecordOutput(message.content);

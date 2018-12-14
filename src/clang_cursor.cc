@@ -290,6 +290,19 @@ std::string ClangCursor::get_comments() const {
     ret.pop_back();
   if (ret.empty())
     return {};
+
+  size_t pos = ret.find("@", 0);
+  while (pos != ret.npos) {
+    size_t p_end = ret.find(" ", pos + 1);
+    if (p_end != ret.npos) {
+      ret.replace(pos, 1, 1, '`');
+      ret.insert(p_end, 1, '`');
+    }
+    if (pos > 0) {
+      if (ret[pos-1] == '\n') ret.insert(pos-1, 2, ' ');
+    }
+    pos = ret.find("@", pos + 3);
+  }
   return ret;
 }
 
