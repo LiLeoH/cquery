@@ -1,7 +1,7 @@
 {"inPathMap":[],
 "outPathMap":[],
-"inOutPathMap":[["file:///e%3A/code/","file:///mnt/hgfs/code/"],
-                ["e:\\code\\", "/mnt/hgfs/code/"],
-                ["file:///f%3A/mingw32/lib/gcc/i686-w64-mingw32/4.6.4/include/c%2B%2B/","file:///usr/include/c%2B%2B/4.6/"],
-                ["f:\\mingw32\\lib\\gcc\\i686-w64-mingw32\\4.6.4\\include\\c++","/usr/include/c++/4.6"]]
+"inOutPathMap":[["file:///r%3A/code/","file:///mnt/hgfs/code/"],
+                ["r:\\code\\", "/mnt/hgfs/code/"],
+                ["file:///r%3A/mingw32/lib/gcc/i686-w64-mingw32/4.6.4/include/c%2B%2B/","file:///usr/include/c%2B%2B/4.6/"],
+                ["r:\\mingw32\\lib\\gcc\\i686-w64-mingw32\\4.6.4\\include\\c++","/usr/include/c++/4.6"]]
 }
